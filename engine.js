@@ -27,23 +27,44 @@
   const SONG = [[262, 330, 392, 494], [220, 262, 330, 392], [175, 220, 262, 330], [196, 247, 294, 392]];
   let mStep = 0, mTimer = null;
   // записанные дорожки: шаг с полем music играет файл audio/<имя>.m4a; на экране телефона музыка не меняется
-  const TR = { name: null, els: {}, fades: {} };
+  // Один общий <audio>, «разбуженный» первым касанием: так дорожки играют и на телефоне (iOS/Android не дают
+  // запускать новые Audio без жеста). Громкость — через GainNode (на iOS у audio.volume нет эффекта).
+  const TR = { name: null, el: null, gain: null, pos: {}, done: {}, fade: null, tok: 0, ready: false, ducked: false };
+  const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+  function trEl() {
+    if (TR.el) return TR.el;
+    const a = TR.el = new Audio(); a.preload = 'auto'; a.setAttribute('playsinline', ''); a.loop = false;
+    a.addEventListener('ended', () => { if (TR.name) TR.done[TR.name] = true; TR.name = null; });
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const src = ac.createMediaElementSource(a); TR.gain = ac.createGain(); src.connect(TR.gain); TR.gain.connect(ac.destination); } catch (e) { TR.gain = null; }
+    return a;
+  }
+  function trVol(v) { if (TR.gain) { try { TR.gain.gain.cancelScheduledValues(0); TR.gain.gain.value = v; } catch (e) {} } else if (TR.el) { try { TR.el.volume = Math.max(0, Math.min(1, v)); } catch (e) {} } }
+  function trUnlock() {   // вызывается из жеста пользователя
+    if (TR.ready) return; const a = trEl(); TR.ready = true;
+    try { if (ac && ac.state === 'suspended') ac.resume(); } catch (e) {}
+    if (!TR.name) { a.dataset.name = ''; a.src = SILENT; const p = a.play(); if (p && p.then) p.then(() => { if (!TR.name) a.pause(); }).catch(() => { TR.ready = false; }); }
+  }
   function setTrack(name) {
     name = name || null;
-    const cur = TR.name && TR.els[TR.name];
-    if (name === TR.name) { if (cur && !cur.ended) { cur.muted = muted; if (!muted && cur.paused) cur.play().catch(() => {}); } return; }
-    if (cur) { const o = cur, k = TR.name; clearInterval(TR.fades[k]); TR.fades[k] = setInterval(() => { o.volume = Math.max(0, o.volume - 0.06); if (o.volume <= 0.01) { o.pause(); clearInterval(TR.fades[k]); } }, 60); }   // пауза с сохранением места
+    const a = TR.el, tok = ++TR.tok;
+    if (name === TR.name) { if (a && TR.name) { a.muted = muted; if (!muted && a.paused && !a.ended) a.play().catch(() => {}); } return; }
+    const leaving = TR.name; clearInterval(TR.fade);
+    if (leaving && a) TR.pos[leaving] = a.currentTime;
     TR.name = null;
-    if (!name) return;
-    let a = TR.els[name];
-    if (!a) { a = TR.els[name] = new Audio('audio/' + (name.includes('.') ? name : name + '.m4a')); a.loop = false; a.addEventListener('ended', () => { a.done = true; if (TR.name === name) TR.name = null; }); }
-    if (a.done) return;                          // трек уже доиграл — дальше обычная фоновая музыка
-    clearInterval(TR.fades[name]); a.volume = 0; a.muted = muted; TR.name = name; a.play().catch(() => {});
-    let n = 0; TR.fades[name] = setInterval(() => { if (TR.name !== name) return clearInterval(TR.fades[name]); n++; const k = Math.min(1, n / 140); a.volume = 0.5 * k * k * (3 - 2 * k); if (k >= 1) clearInterval(TR.fades[name]); }, 50);   // с нуля до обычной громкости плавно, ~7 секунд
+    const start = () => {
+      if (tok !== TR.tok || !name || TR.done[name]) return;
+      const el = trEl(); const file = 'audio/' + (name.includes('.') ? name : name + '.m4a');
+      if (el.dataset.name !== name) { el.dataset.name = name; el.src = file; const p0 = TR.pos[name] || 0; if (p0) el.addEventListener('loadedmetadata', () => { try { el.currentTime = p0; } catch (e) {} }, { once: true }); el.load(); }
+      el.muted = muted; TR.name = name; TR.ducked = false; trVol(0);
+      const pr = el.play(); if (pr && pr.catch) pr.catch(() => {});
+      let n = 0; TR.fade = setInterval(() => { if (TR.name !== name) return clearInterval(TR.fade); n++; const k = Math.min(1, n / 140); trVol(0.5 * k * k * (3 - 2 * k)); if (k >= 1) clearInterval(TR.fade); }, 50);   // с нуля до обычной громкости плавно, ~7 секунд
+    };
+    if (leaving && a && !a.paused) {   // короткий спад старой дорожки, потом новая
+      let g = 0.5; TR.fade = setInterval(() => { g -= 0.1; trVol(Math.max(0, g)); if (g <= 0) { clearInterval(TR.fade); a.pause(); start(); } }, 40);
+    } else start();
   }
   // пока играет видео со своим звуком, дорожка тише
-  let ducked = false;   // громкость трогаем, только когда видео реально включается/выключается, иначе рвётся плавный подъём
-  function duck(on) { const a = TR.name && TR.els[TR.name]; if (!a) return; if (on) { ducked = true; a.volume = 0.08; } else if (ducked) { ducked = false; a.volume = 0.5; } }
+  function duck(on) { if (!TR.name || !TR.el) return; if (on) { TR.ducked = true; clearInterval(TR.fade); trVol(0.08); } else if (TR.ducked) { TR.ducked = false; trVol(0.5); } }
   function musicTick() {
     if (muted || !ac || document.hidden || TR.name) return;
     const bar = SONG[Math.floor(mStep / 8) % SONG.length], i = mStep % 8;
@@ -55,7 +76,7 @@
     mStep++;
   }
   function startMusic() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} if (!mTimer) mTimer = setInterval(musicTick, 300); }
-  addEventListener('pointerdown', startMusic, { once: true }); addEventListener('keydown', startMusic, { once: true });
+  ['pointerdown', 'touchend', 'click', 'keydown'].forEach(ev => addEventListener(ev, () => { startMusic(); trUnlock(); }, { passive: true }));
 
   // ---------- размер ----------
   function resize() {
@@ -234,7 +255,7 @@
     if (save.max > 0 || save.ch > 0) add('Продолжить', () => startChapter(Math.min(save.ch, STORY.length - 1)), true);
     add(save.max > 0 ? 'Начать сначала' : 'Начать', () => startChapter(0), !(save.max > 0 || save.ch > 0));
     add('Главы', () => { const l = $('chapList'); l.classList.toggle('hidden'); });
-    add(muted ? 'Звук: выкл' : 'Звук: вкл', () => { muted = !muted; for (const k in TR.els) TR.els[k].muted = muted; openMenu(finished); });
+    add(muted ? 'Звук: выкл' : 'Звук: вкл', () => { muted = !muted; if (TR.el) TR.el.muted = muted; openMenu(finished); });
     const l = $('chapList'); l.innerHTML = '';
     STORY.forEach((c, i) => {
       const e = document.createElement('div'); const open = i <= save.max || META.unlockAll;
