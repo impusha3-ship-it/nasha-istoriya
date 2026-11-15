@@ -175,6 +175,8 @@
     S.cam = 0; S.ended = false; S.sceneState = Object.assign({}, st.opts || {});
     S.am = st === STORY[S.ch].steps[S.st] ? amFor(S.ch, S.st, st) : null; if (S.am) S.am.got = save.am.includes(S.am.key); amHud();
     if (S.actors[S.player]) S.cam = Math.max(0, Math.min(S.sceneW - W, S.actors[S.player].x - W / 2));
+    // сцены-диалоги без ходьбы: камера по центру между героями, чтобы на узком экране (телефон) были видны оба
+    if (st.t === 'say') { const xs = Object.values(S.actors).filter(a => !a.hidden).map(a => a.x); if (xs.length) S.cam = Math.max(0, Math.min(S.sceneW - W, (Math.min(...xs) + Math.max(...xs)) / 2 - W / 2)); }
   }
 
   // --- собираемые амнямы: по одному почти в каждой сцене с ходьбой ---

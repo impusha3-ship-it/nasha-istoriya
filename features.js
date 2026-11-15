@@ -66,6 +66,7 @@
 
   // ---------- ачивки: шутки из переписки ----------
   // ch — индекс главы, s — индекс шага (-1 = конец главы); награда выдаётся, когда шаг закончился
+  const ACH_ON = false;   // ачивки пока выключены: поставить true, чтобы вернуть всплывашки и экран
   const ACH = [
     { id: 'tale', ch: 1, s: -1, ic: 'star', t: 'Новогодняя сказка', d: 'Первый раз вдвоём в театре' },
     { id: 'door', ch: 2, s: -1, ic: 'key', t: 'Откройте дом, пожалуйста', d: 'Леонид сказал: «ты знаешь короткий путь»' },
@@ -142,7 +143,7 @@
     requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('on'))); chime();
     setTimeout(() => { toast.classList.remove('on'); setTimeout(() => { showing = false; pump(); }, 600); }, 3800);
   }
-  function unlock(a) { if (st.ach[a.id]) return; st.ach[a.id] = Date.now(); persist(); queue.push(a); pump(); }
+  function unlock(a) { if (!ACH_ON || st.ach[a.id]) return; st.ach[a.id] = Date.now(); persist(); queue.push(a); pump(); }
 
   function achScreen() {
     const ov = el('div', 'ov'), n = Object.keys(st.ach).length;
@@ -204,7 +205,7 @@
     const btn = (txt, fn, main) => { const b = el('button', 'mb' + (main ? ' main' : ''), txt); b.onclick = fn; bt.appendChild(b); return b; };
     if (voiceOk) { let au = null; btn('▶ Голос Димы', function () { if (!au) au = new Audio('audio/voice.m4a'); if (au.paused) { au.play().catch(() => {}); this.textContent = '❚❚ Голос Димы'; } else { au.pause(); this.textContent = '▶ Голос Димы'; } }, true); }
     btn('Альбом', albumScreen);
-    btn('Достижения', achScreen);
+    if (ACH_ON) btn('Достижения', achScreen);
     btn('В меню', () => { ov.remove(); cb(); });
     ov.appendChild(bt); $('app').appendChild(ov);
   }
@@ -214,7 +215,7 @@
     const sub = $('menuSub'); if (sub && !$('cd')) sub.parentNode.insertBefore(cdNode(), sub.nextSibling);
     const b = $('menuBtns'); if (!b) return;
     const add = (txt, fn) => { const e = el('button', 'mb', txt); e.onclick = fn; b.insertBefore(e, b.lastChild); };
-    add('Достижения ' + Object.keys(st.ach).length + ' / ' + ACH.length, achScreen);
+    if (ACH_ON) add('Достижения ' + Object.keys(st.ach).length + ' / ' + ACH.length, achScreen);
     if (st.done) add('Альбом', albumScreen);
   }
 
