@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#14122b">
+<title>Наша история</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Handjet:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=100">
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" width="256" height="144"></canvas>
+    <canvas id="mapcv" class="hidden"></canvas>
+    <div id="hud"><span id="hudDate"></span><span id="hudPlace"></span><span id="hudAm"></span></div>
+    <button id="btnMenu" aria-label="Меню">≡</button>
+    <div id="hint"></div>
+    <div id="photo" class="hidden"><img alt=""><video class="hidden" playsinline loop preload="auto"></video><span></span></div>
+  </div>
+
+  <div id="dlg" class="hidden">
+    <canvas id="dlgFace" width="32" height="32"></canvas>
+    <div id="dlgBody">
+      <div id="dlgName"></div>
+      <div id="dlgText"></div>
+    </div>
+    <div id="dlgNext">▼</div>
+  </div>
+
+  <div id="pad" class="hidden">
+    <div class="padL">
+      <button id="bL" aria-label="Влево">◀</button>
+      <button id="bR" aria-label="Вправо">▶</button>
+    </div>
+    <button id="bA" aria-label="Действие">!</button>
+  </div>
+
+  <div id="card" class="hidden">
+    <div id="cardNum"></div>
+    <div id="cardDate"></div>
+    <div id="cardTitle"></div>
+    <div id="cardSub"></div>
+    <div class="tap">нажми, чтобы продолжить</div>
+  </div>
+
+  <div id="phone" class="hidden">
+    <div id="phFrame">
+      <div id="phTop"><span id="phBack">‹</span><span id="phAva"></span><span id="phWho"><b id="phName"></b><i id="phStatus"></i></span></div>
+      <div id="phList"></div>
+      <div id="phBottom"><span>Сообщение</span><b>➤</b></div>
+    </div>
+    <div class="tap" id="phTap">нажимай, чтобы читать дальше</div>
+  </div>
+
+  <canvas id="titlecv" class="hidden"></canvas>
+
+  <div id="menu" class="hidden">
+    <div id="menuBox">
+      <h1 id="menuTitle">Наша история</h1>
+      <div id="menuSub"></div>
+      <div id="menuBtns"></div>
+      <div id="chapList" class="hidden"></div>
+    </div>
+  </div>
+</div>
+<script src="art.js?v=100"></script>
+<script src="art2.js?v=100"></script>
+<script src="scenes.js?v=100"></script>
+<script src="props2.js?v=100"></script>
+<script src="extras.js?v=100"></script>
+<script src="shanghai.js?v=100"></script>
+<script src="places.js?v=100"></script>
+<script src="scenes2.js?v=100"></script>
+<script src="scenes3.js?v=100"></script>
+<script src="scenes4.js?v=100"></script>
+<script src="scenes5.js?v=100"></script>
+<script src="scenes6.js?v=100"></script>
+<script src="scenes7.js?v=100"></script>
+<script src="scenes8.js?v=100"></script>
+<script src="scenes9.js?v=100"></script>
+<script src="scenes10.js?v=100"></script>
+<script src="scenes11.js?v=100"></script>
+<script src="scenes12.js?v=100"></script>
+<script src="scenes13.js?v=100"></script>
+<script src="story.js?v=100"></script>
+<script src="story2.js?v=100"></script>
+<script src="story3.js?v=100"></script>
+<script src="story4.js?v=100"></script>
+<script src="story5.js?v=100"></script>
+<script src="story6.js?v=100"></script>
+<script src="story7.js?v=100"></script>
+<script src="patch3.js?v=100"></script>
+<script src="patch4.js?v=100"></script>
+<script src="title.js?v=100"></script>
+<script src="features.js?v=100"></script>
+<script src="engine.js?v=100"></script>
+</body>
+</html>
